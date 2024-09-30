@@ -24,7 +24,7 @@ public class GitHubProvider(IGitHubApi githubApi, IMapper mapper, IUserIdentity 
         return repos;
     }
 
-    public async Task<IssueReadModel> CreateIssue(string repo, string title, string body)
+    public async Task<IssueReadModel> CreateIssue(long repoId, string repo, string title, string body)
     {
         var issue = await githubApi.CreateIssue(
             userIdentity.UserName, 
@@ -38,27 +38,28 @@ public class GitHubProvider(IGitHubApi githubApi, IMapper mapper, IUserIdentity 
         return mapper.Map<IssueReadModel>(issue);
     }
 
-    public async Task<IssueReadModel> UpdateIssue(string repo, long number, string title, string body)
+    public async Task<IssueReadModel> UpdateIssue(long repoId, string repo, long issueNumber, string title, string body)
     {
         var issue = await githubApi.UpdateIssue(
             userIdentity.UserName, 
-            repo, 
-            number, 
-            new ExternalApi.Contracts.GitHubApi.Models.IssueModel() 
-            { 
-                Title = title, 
-                Body = body
+            repo,
+            issueNumber,
+            new ExternalApi.Contracts.GitHubApi.Models.IssueModel()
+            {
+                Title = title,
+                Body = body,
+                State = "open"
             });
 
         return mapper.Map<IssueReadModel>(issue);
     }
 
-    public async Task<IssueReadModel> CloseIssue(string repo, long number, string title, string body)
+    public async Task<IssueReadModel> CloseIssue(long repoId, string repo, long issueNumber, string title, string body)
     {
         var issue = await githubApi.UpdateIssue(
             userIdentity.UserName,                
             repo,
-            number,
+            issueNumber,
             new ExternalApi.Contracts.GitHubApi.Models.IssueModel()
             {
                 Title = title,

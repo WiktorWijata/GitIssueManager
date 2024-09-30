@@ -21,56 +21,74 @@
     <p>
         <strong>Hello! @UserIdentity.Name</strong>
     </p>
-
-    @if (repos != null && repos.Any())
-    {                            
-        @foreach (var repo in repos)
-        {
-            <div class="d-flex align-items-center mb-2">
-                <h4 class="me-3 mb-0">
-                    <span class="badge bg-success">@repo.Name</span>
-                </h4>
-                <button class="btn btn-primary btn-sm" @onclick="async () => await AddNewIssue(repo.Name)">Add new issue</button>
-            </div>
-            
-            @if (repo.Issues != null && repo.Issues.Any())
-            {
-                <table class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Issue</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var issue in repo.Issues)
-                        {
-                            <tr>
-                                <td>
-                                    <div>
-                                        <h4>@issue.Title</h4>
-                                        <span>@issue.Body</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button class="btn btn-primary" @onclick="async () => await EditIssue(repo.Name, issue)">Edit</button>
-                                    <button class="btn btn-primary bg-danger" @onclick="async () => await CloseIssue(repo.Name, issue)">Close</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                
-            }    
-            else
-            {
-                <p>No issues found.</p>
-            }
-        }
+    @if (isLoading)
+    {
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     }
     else
     {
-        <stong><p>No repositories found.</p></stong>
+        @if (repos != null && repos.Any())
+        {
+            @foreach (var repo in repos)
+            {
+                <div class="d-flex align-items-center mb-2">
+                    <h4 class="me-3 mb-0">
+                        <span class="badge bg-success">@repo.Name</span>
+                    </h4>
+                    <button class="btn btn-primary btn-sm" @onclick="async () => await AddNewIssue(repo.Id, repo.Name)">Add new issue</button>
+                </div>
+
+                @if (repo.Issues != null && repo.Issues.Any())
+                {
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Issue</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var issue in repo.Issues)
+                            {
+                                <tr>
+                                    <td colspan="@(!issue.IsClosed ? 1 : 2)">
+                                        <div>
+                                            <div class="col">
+                                                @if (issue.IsClosed)
+                                                {
+                                                    <span class="badge bg-danger d-inline-block mb-2">Closed</span>
+                                                }
+                                                <h4>@issue.Title</h4>
+
+                                            </div>                                            
+                                            <span>@issue.Body</span>
+                                        </div>
+                                    </td>
+                                    @if (!issue.IsClosed)
+                                    {
+                                        <td>
+                                            <button class="btn btn-primary" @onclick="async () => await EditIssue(repo.Id, repo.Name, issue)">Edit</button>
+                                            <button class="btn btn-primary bg-danger" @onclick="async () => await CloseIssue(repo.Id, repo.Name, issue)">Close</button>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                }
+                else
+                {
+                    <p>No issues found.</p>
+                }
+            }
+        }
+        else
+        {
+            <stong><p>No repositories found.</p></stong>
+        }
     }
 }
 else
@@ -82,13 +100,17 @@ else
 
 @code {
     private IEnumerable<RepoReadModel> repos;
+    private bool isLoading = true;
 
     protected override async Task OnParametersSetAsync()
     {
-        repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+        if (UserIdentity.IsAuthenticated)
+        {
+            await Refresh();
+        }        
     }
 
-    private async Task AddNewIssue(string repoName)
+    private async Task AddNewIssue(long repoId, string repoName)
     {
         var parameters = new ModalParameters();
         var newIssueReadModel = new IssueReadModel();
@@ -100,14 +122,20 @@ else
             var issueReadModel = result.Data as IssueReadModel;    
             if (issueReadModel != null)
             {
-                var createIssue = new CreateIssueModel(){ Repo = repoName, Title = issueReadModel.Title, Body = issueReadModel.Body};
+                var createIssue = new CreateIssueModel()
+                { 
+                    RepoId = repoId,
+                    Repo = repoName, 
+                    Title = issueReadModel.Title, 
+                    Body = issueReadModel.Body
+                };
                 await IssueApi.Create(createIssue);
-                repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+                await Refresh();
             }
         }
     }
 
-    private async Task EditIssue(string repoName, IssueReadModel issue)
+    private async Task EditIssue(long repoId, string repoName, IssueReadModel issue)
     {
         var parameters = new ModalParameters();
         parameters.Add(nameof(IssueModal.Issue), issue);
@@ -122,18 +150,20 @@ else
             {
                 var updateIssue = new UpdateIssueModel() 
                 {
+                    RepoId = repoId,
                     Repo = repoName,
                     IssueNumber = issueReadModel.Number, 
                     Title = issueReadModel.Title, 
-                    Body = issueReadModel.Body 
+                    Body = issueReadModel.Body,
+                    State = issueReadModel.State
                 };
                 await IssueApi.Update(updateIssue);
-                repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+                await Refresh();
             }
         }
     }
 
-    private async Task CloseIssue(string repoName, IssueReadModel issue)
+    private async Task CloseIssue(long repoId, string repoName, IssueReadModel issue)
     {
         var parameters = new ModalParameters();
 
@@ -144,13 +174,21 @@ else
         {
             var closeIssue = new CloseIssueModel()
             {
+                RepoId = repoId,
                 Repo = repoName,
                 IssueNumber = issue.Number,
                 Title = issue.Title,
                 Body = issue.Body
             };
             await IssueApi.Close(closeIssue);
-            repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+            await Refresh();
         }
+    }
+
+    private async Task Refresh()
+    {
+        isLoading = true;
+        repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+        isLoading = false;
     }
 }

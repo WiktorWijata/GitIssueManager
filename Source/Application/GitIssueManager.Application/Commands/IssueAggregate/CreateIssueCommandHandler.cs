@@ -12,7 +12,7 @@ public class CreateIssueCommandHandler(IUserIdentity userIdentity, Func<Provider
     public async Task<IssueReadModel> Handle(CreateIssueCommand request, CancellationToken cancellationToken)
     {
         var provider = providerFactory(userIdentity.ProviderType);
-        var issue = await provider.CreateIssue(request.Repo, request.Title, request.Body);
+        var issue = await provider.CreateIssue(request.RepoId, request.Repo, request.Title, request.Body);
         return issue;
     }
 }

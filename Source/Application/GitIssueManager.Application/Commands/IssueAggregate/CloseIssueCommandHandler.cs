@@ -12,7 +12,7 @@ public class CloseIssueCommandHandler(IUserIdentity userIdentity, Func<ProviderT
     public async Task<IssueReadModel> Handle(CloseIssueCommand request, CancellationToken cancellationToken)
     {
         var provider = providerFactory(userIdentity.ProviderType);
-        var closedIssue = await provider.CloseIssue(request.Repo, request.IssueNumber, request.Title, request.Body);
+        var closedIssue = await provider.CloseIssue(request.RepoId, request.Repo, request.IssueNumber, request.Title, request.Body);
         return closedIssue;
     }
 }

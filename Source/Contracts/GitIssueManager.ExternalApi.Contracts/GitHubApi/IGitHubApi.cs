@@ -7,11 +7,8 @@ namespace GitIssueManager.ExternalApi.Contracts.GitHubApi
 {
     public interface IGitHubApi
     {
-        [Get("/repos/{owner}/{repo}/issues")]
+        [Get("/repos/{owner}/{repo}/issues?state=all")]
         Task<IssueResponse[]> GetIssuesForRepo(string owner, string repo);
-
-        [Get("/repos/{owner}/{repo}/issues/{issue_number}")]
-        Task<IssueResponse> GetIssue(string owner, string repo, long issue_number);
 
         [Post("/repos/{owner}/{repo}/issues")]
         Task<IssueResponse> CreateIssue(string owner, string repo, [Body] IssueModel model);

@@ -26,6 +26,11 @@ public class IssueController(IMediator mediator, IMapper mapper) : ControllerBas
     [Produces(typeof(IssueReadModel))]
     public async Task<IActionResult> Update(UpdateIssueModel updateIssueModel)
     {
+        if (updateIssueModel.State is "closed")
+        {
+            return BadRequest("You cannot change a closed issue");
+        }
+            
         var command = mapper.Map<UpdateIssueCommand>(updateIssueModel);
         var updatedIssue = await mediator.Send(command);
         return Ok(updatedIssue);

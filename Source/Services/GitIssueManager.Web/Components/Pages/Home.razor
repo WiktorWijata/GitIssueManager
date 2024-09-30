@@ -26,13 +26,13 @@ Welcome to Git Issue Manager!
 <br />
 @if (UserIdentity.IsAuthenticated)
 {
-    <button @onclick="Logout">Logout</button>
+    <button class="btn btn-primary bg-success" @onclick="Logout">Logout</button>
 }
 else
 {
     <div>
-        <button @onclick="LoginWithGitHub">Login with GitHub</button>
-        <button @onclick="LoginWithGitLab">Login with GitLab</button>
+        <button class="btn btn-primary bg-success" @onclick="LoginWithGitHub">Login with GitHub</button>
+        <button class="btn btn-primary bg-success" @onclick="LoginWithGitLab">Login with GitLab</button>
     </div>
 
 }
