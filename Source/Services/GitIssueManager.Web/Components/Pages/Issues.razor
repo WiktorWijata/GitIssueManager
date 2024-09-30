@@ -1,0 +1,156 @@
+﻿@page "/issues"
+@rendermode InteractiveServer
+
+@using GitIssueManager.Api.Contract
+@using GitIssueManager.Contract.ReadModels
+@using GitIssueManager.Infrastructure.Authorization.UserIdentity
+@using GitIssueManager.Web.Components.Modals
+@using GitIssueManager.Web.Middleware
+@using GitIssueManager.Contract.Models
+
+@inject IUserIdentity UserIdentity
+@inject IIssueReadApi IssueReadApi
+@inject IIssueApi IssueApi
+@inject NavigationManager NavigationManager
+@inject IModalService Modal
+
+<h2>Repositories</h2>
+
+@if (UserIdentity.IsAuthenticated)
+{
+    <p>
+        <strong>Hello! @UserIdentity.Name</strong>
+    </p>
+
+    @if (repos != null && repos.Any())
+    {                            
+        @foreach (var repo in repos)
+        {
+            <div class="d-flex align-items-center mb-2">
+                <h4 class="me-3 mb-0">
+                    <span class="badge bg-success">@repo.Name</span>
+                </h4>
+                <button class="btn btn-primary btn-sm" @onclick="async () => await AddNewIssue(repo.Name)">Add new issue</button>
+            </div>
+            
+            @if (repo.Issues != null && repo.Issues.Any())
+            {
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Issue</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var issue in repo.Issues)
+                        {
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h4>@issue.Title</h4>
+                                        <span>@issue.Body</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary" @onclick="async () => await EditIssue(repo.Name, issue)">Edit</button>
+                                    <button class="btn btn-primary bg-danger" @onclick="async () => await CloseIssue(repo.Name, issue)">Close</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                
+            }    
+            else
+            {
+                <p>No issues found.</p>
+            }
+        }
+    }
+    else
+    {
+        <stong><p>No repositories found.</p></stong>
+    }
+}
+else
+{
+    <p>
+        <strong>You need to log in!</strong>
+    </p>
+}
+
+@code {
+    private IEnumerable<RepoReadModel> repos;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+    }
+
+    private async Task AddNewIssue(string repoName)
+    {
+        var parameters = new ModalParameters();
+        var newIssueReadModel = new IssueReadModel();
+        parameters.Add("Issue", newIssueReadModel);
+        var modalResult = Modal.Show<IssueModal>("Add New Issue", parameters);
+        var result = await modalResult.Result;
+        if (!result.Cancelled)
+        {
+            var issueReadModel = result.Data as IssueReadModel;    
+            if (issueReadModel != null)
+            {
+                var createIssue = new CreateIssueModel(){ Repo = repoName, Title = issueReadModel.Title, Body = issueReadModel.Body};
+                await IssueApi.Create(createIssue);
+                repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+            }
+        }
+    }
+
+    private async Task EditIssue(string repoName, IssueReadModel issue)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(IssueModal.Issue), issue);
+
+        var modalResult = Modal.Show<IssueModal>("Edit Issue", parameters);
+        var result = await modalResult.Result;
+
+        if (!result.Cancelled)
+        {
+            var issueReadModel = result.Data as IssueReadModel;
+            if (issueReadModel != null)
+            {
+                var updateIssue = new UpdateIssueModel() 
+                {
+                    Repo = repoName,
+                    IssueNumber = issueReadModel.Number, 
+                    Title = issueReadModel.Title, 
+                    Body = issueReadModel.Body 
+                };
+                await IssueApi.Update(updateIssue);
+                repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+            }
+        }
+    }
+
+    private async Task CloseIssue(string repoName, IssueReadModel issue)
+    {
+        var parameters = new ModalParameters();
+
+        var modalResult = Modal.Show<ConfirmActionModal>("Close Issue", parameters);
+        var result = await modalResult.Result;
+
+        if (!result.Cancelled)
+        {
+            var closeIssue = new CloseIssueModel()
+            {
+                Repo = repoName,
+                IssueNumber = issue.Number,
+                Title = issue.Title,
+                Body = issue.Body
+            };
+            await IssueApi.Close(closeIssue);
+            repos = await IssueReadApi.GetRepos(UserIdentity.UserName);
+        }
+    }
+}

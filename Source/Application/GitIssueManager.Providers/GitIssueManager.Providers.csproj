@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Contracts\GitIssueManager.Contract\GitIssueManager.Contract.csproj" />
+    <ProjectReference Include="..\..\Contracts\GitIssueManager.ExternalApi.Contracts\GitIssueManager.ExternalApi.Contracts.csproj" />
+    <ProjectReference Include="..\GitIssueManager.Infrastructure\GitIssueManager.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

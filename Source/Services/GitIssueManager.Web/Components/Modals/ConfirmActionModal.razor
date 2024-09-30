@@ -1,0 +1,18 @@
+﻿@page "/confirm-action"
+@using System.Threading.Tasks
+
+<div class="modal-body">
+    <p>Are you sure you want to close this issue?</p>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" @onclick="Confirm">Confirm</button>
+    <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</div>
+
+@code {
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }
+
+    Task Confirm() => BlazoredModal.CloseAsync();
+    Task Cancel() => BlazoredModal.CancelAsync();
+}

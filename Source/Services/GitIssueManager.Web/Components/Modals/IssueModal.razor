@@ -1,0 +1,32 @@
+﻿@page "/issue-modal"
+@using GitIssueManager.Contract.Models
+@using GitIssueManager.Contract.ReadModels
+
+@inject Blazored.Modal.Services.IModalService Modal
+
+<EditForm Model="Issue">
+    <div>
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" class="form-control" @bind="Issue.Title" />
+        </div>
+        <div class="form-group">
+            <label for="body">Body</label>
+            <textarea id="body" class="form-control" @bind="Issue.Body"></textarea>
+        </div>
+    </div>
+    <div class="mt-2">
+        <button class="btn btn-primary" @onclick="Close">Zapisz</button>
+        <button class="btn btn-secondary" @onclick="async () => BlazoredModal.CancelAsync()">Cancel</button>
+    </div>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }
+
+    [Parameter]
+    public IssueReadModel Issue { get; set; }
+
+    Task Close() => BlazoredModal.CloseAsync(ModalResult.Ok(Issue));
+}

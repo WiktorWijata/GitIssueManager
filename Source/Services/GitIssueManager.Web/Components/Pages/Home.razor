@@ -1,0 +1,72 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@using System.Net.Http
+@using System.Net.Http.Json
+@using GitIssueManager.Infrastructure.Authorization.UserIdentity
+@using Microsoft.Extensions.Options
+
+@inject NavigationManager Navigation
+@inject IOptions<ExternalRoutes> Options
+@inject IUserIdentity UserIdentity
+
+<PageTitle>Git Issue Manager</PageTitle>
+
+@if (UserIdentity.IsAuthenticated)
+{
+    <h1>Hello @UserIdentity.Name</h1>
+}
+else
+{
+    <h1>Hello!</h1>
+}
+
+Welcome to Git Issue Manager!
+
+<br />
+@if (UserIdentity.IsAuthenticated)
+{
+    <button @onclick="Logout">Logout</button>
+}
+else
+{
+    <div>
+        <button @onclick="LoginWithGitHub">Login with GitHub</button>
+        <button @onclick="LoginWithGitLab">Login with GitLab</button>
+    </div>
+
+}
+
+@code {
+    private ExternalRoutes externalRoutes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        externalRoutes = Options.Value;
+    }
+
+    private void LoginWithGitHub()
+    {
+        var redirectUri = Navigation.ToAbsoluteUri("/api/auth/callback").ToString();
+
+        Console.WriteLine($"{redirectUri}");
+        Console.WriteLine($"{externalRoutes.AuthApi}");
+        var loginUrl = $"{externalRoutes.AuthApi}/login-with-github?redirectUri={redirectUri}";
+        Navigation.NavigateTo(loginUrl, forceLoad: true);
+    }
+
+    private void LoginWithGitLab()
+    {
+        var redirectUri = Navigation.ToAbsoluteUri("/api/auth/callback").ToString();
+
+        Console.WriteLine($"{redirectUri}");
+        Console.WriteLine($"{externalRoutes.AuthApi}");
+        var loginUrl = $"{externalRoutes.AuthApi}/login-with-gitlab?redirectUri={redirectUri}";
+        Navigation.NavigateTo(loginUrl, forceLoad: true);
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/api/auth/logout", forceLoad: true);
+    }
+}
