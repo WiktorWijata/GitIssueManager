@@ -12,10 +12,10 @@ using GitIssueManager.ExternalApi.Contracts.GitHubApi;
 using GitIssueManager.Providers.GitHub;
 using GitIssueManager.Providers;
 using GitIssueManager.Infrastructure;
-using Refit;
 using GitIssueManager.Infrastructure.Authorization.UserIdentity;
 using GitIssueManager.Providers.GitLab;
 using GitIssueManager.ExternalApi.Contracts.GitLabApi;
+using GitIssueManager.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 var externalRoutes = builder.Configuration.GetSection("ExternalRoutes");
@@ -99,15 +99,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddTransient<GitHubHttpsClientHandler>();
-builder.Services.AddHttpClient<IGitHubApi>(c => { c.BaseAddress = new Uri(externalRoutes["GitHubApi"]); })
-    .ConfigurePrimaryHttpMessageHandler<GitHubHttpsClientHandler>()
-    .AddTypedClient(c => RestService.For<IGitHubApi>(c));
-
-builder.Services.AddTransient<GitLabHttpsClientHandler>();
-builder.Services.AddHttpClient<IGitLabApi>(c => { c.BaseAddress = new Uri(externalRoutes["GitLabApi"]); })
-    .ConfigurePrimaryHttpMessageHandler<GitLabHttpsClientHandler>()
-    .AddTypedClient(c => RestService.For<IGitLabApi>(c));
+builder.Services.AddRefitClient<IGitHubApi>(externalRoutes["GitHubApi"], typeof(GitHubHttpsClientHandler));
+builder.Services.AddRefitClient<IGitLabApi>(externalRoutes["GitLabApi"], typeof(GitLabHttpsClientHandler));
 
 builder.Services.AddTransient<GitHubProvider>();
 builder.Services.AddTransient<GitLabProvider>();
