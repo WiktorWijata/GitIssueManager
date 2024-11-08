@@ -104,15 +104,8 @@ builder.Services.AddRefitClient<IGitLabApi>(externalRoutes["GitLabApi"], typeof(
 
 builder.Services.AddTransient<GitHubProvider>();
 builder.Services.AddTransient<GitLabProvider>();
-builder.Services.AddTransient<Func<ProviderTypes, IGitProvider>>(s => key =>
-{
-    return key switch
-    {
-        ProviderTypes.GitHub => s.GetRequiredService<GitHubProvider>(),
-        ProviderTypes.GitLab => s.GetRequiredService<GitLabProvider>(),
-        _ => throw new NotImplementedException()
-    };
-});
+builder.Services.AddKeyedTransient<IGitProvider, GitHubProvider>(ProviderTypes.GitHub);
+builder.Services.AddKeyedTransient<IGitProvider, GitLabProvider>(ProviderTypes.GitLab);
 
 var app = builder.Build();
 

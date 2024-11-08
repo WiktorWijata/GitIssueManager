@@ -1,6 +1,6 @@
-﻿using GitIssueManager.Infrastructure.Authorization;
+﻿using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
-using System.Net.Http.Headers;
+using GitIssueManager.Infrastructure.Authorization;
 
 namespace GitIssueManager.Api.Middleware;
 
