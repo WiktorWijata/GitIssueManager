@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using GitIssueManager.Api.Contract;
+using GitIssueManager.Infrastructure.Authorization.UserIdentity;
+using GitIssueManager.Infrastructure.Extensions;
 using GitIssueManager.Web;
 using GitIssueManager.Web.Commands;
 using GitIssueManager.Web.Components;
 using GitIssueManager.Web.Middleware;
-using Refit;
-using GitIssueManager.Infrastructure.Authorization.UserIdentity;
 using Blazored.Modal;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,14 +29,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
-builder.Services.AddTransient<GitIssueManagerHttpsClientHandler>();
-builder.Services.AddHttpClient<IIssueApi>(c => { c.BaseAddress = new Uri(externalRoutes["IssueApi"]); })
-    .ConfigurePrimaryHttpMessageHandler<GitIssueManagerHttpsClientHandler>()
-    .AddTypedClient(c => RestService.For<IIssueApi>(c));
-
-builder.Services.AddHttpClient<IIssueReadApi>(c => { c.BaseAddress = new Uri(externalRoutes["IssueApi"]); })
-    .ConfigurePrimaryHttpMessageHandler<GitIssueManagerHttpsClientHandler>()
-    .AddTypedClient(c => RestService.For<IIssueReadApi>(c));
+builder.Services.AddRefitClient<IIssueApi>(externalRoutes["IssueApi"], typeof(GitIssueManagerHttpsClientHandler));
+builder.Services.AddRefitClient<IIssueReadApi>(externalRoutes["IssueApi"], typeof(GitIssueManagerHttpsClientHandler));
 
 var app = builder.Build();
 
